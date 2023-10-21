@@ -1,4 +1,4 @@
-import { createUser } from '../modules/userModule.js';
+import { createUser } from '../modules/helperModule.js';
 import bcrypt from "bcrypt";
 
 export const registerUser = async (req, res) => {
