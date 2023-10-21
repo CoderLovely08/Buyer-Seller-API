@@ -10,6 +10,7 @@ const app = express();
 
 // Import routes
 import authRouter from "./routes/authRoutes.js";
+import buyerRouter from "./routes/buyerRoutes.js";
 
 // configure the app to use bodyParser()
 app.use(bodyParser.urlencoded({
@@ -19,8 +20,10 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 // Redirect routes
-app.use('/api', authRouter);
+app.use('/api/auth', authRouter);
 
+// Buyer Routes
+app.use('/api/buyer', buyerRouter);
 // Default route
 app.get('/', (req, res) => {
     try {
