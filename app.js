@@ -1,4 +1,5 @@
 import express from "express";
+import bodyParser from 'body-parser'
 import { config } from 'dotenv'
 
 // Setting up env file
@@ -7,8 +8,18 @@ config();
 // creating app instance
 const app = express();
 
+// Import routes
+import authRouter from "./routes/authRoutes.js";
+
+// configure the app to use bodyParser()
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 // parse incoming requests with JSON
-app.use(express.json());
+app.use(bodyParser.json());
+
+// Redirect routes
+app.use('/api', authRouter);
 
 // Default route
 app.get('/', (req, res) => {
