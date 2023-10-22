@@ -72,3 +72,44 @@ export const retrieveAllSellers = async () => {
         }
     }
 }
+
+export const retrieveSellerCatalog = async (sellerId) => {
+    try {
+        const query = {
+            text: `
+        SELECT 
+            ui.user_id AS seller_id,
+            ui.user_name AS seller_name,
+            pi.product_id,
+            pi.product_name,
+            pi.product_price
+        FROM 
+            UserInfo ui
+        LEFT JOIN 
+            CatalogInfo ci ON ci.user_id = ui.user_id
+        LEFT JOIN 
+            ProductsInfo pi ON pi.catalog_id = ci.catalog_id
+        WHERE 
+            ui.user_id = $1;
+        `,
+            values: [sellerId]
+        }
+
+        const { rowCount, rows } = await pool.query(query);
+        return {
+            success: true,
+            data: rows,
+            count: rowCount
+        }
+
+    } catch (error) {
+        console.error(`Error in retrieveSellerCatalog() method: ${error}`);
+        // Return if the query fails
+        return {
+            success: false,
+            userId: -1,
+            message: 'Internal Server Error',
+            error: error
+        }
+    }
+}
