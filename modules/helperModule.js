@@ -113,3 +113,34 @@ export const retrieveSellerCatalog = async (sellerId) => {
         }
     }
 }
+
+
+export const createOrderBySellerId = async (userId, sellerId) => {
+    try {
+        const query = {
+            text: `
+                INSERT INTO OrderInfo(user_id, catalog_id) VALUES(
+                    $1,
+                    (SELECT catalog_id FROM CatalogInfo WHERE user_id = $2)
+                )
+                `,
+            values: [userId, sellerId]
+        }
+
+        const { rowCount } = await pool.query(query);
+
+        return {
+            success: rowCount === 1,
+            message: rowCount === 1 ? 'Order Successful' : 'Unable to place order',
+        }
+    } catch (error) {
+        console.error(`Error in createOrderBySellerId() method: ${error}`);
+        // Return if the query fails
+        return {
+            success: false,
+            userId: -1,
+            message: 'Internal Server Error',
+            error: error
+        }
+    }
+}
