@@ -1,5 +1,14 @@
 import pool from "../config/dbConfig.js";
-
+/**
+ * Creates a new user in the database.
+ *
+ * @param {string} userName - The username of the new user.
+ * @param {string} userPassword - The password of the new user.
+ * @param {string} userType - The type of the new user (e.g., 'admin', 'customer', 'seller').
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+*/
 export const createUser = async (userName, userPassword, userType) => {
     try {
         const query = {
@@ -10,6 +19,7 @@ export const createUser = async (userName, userPassword, userType) => {
 
         if (rowCount === 1) {
             return {
+                status: 201, // HTTP status for Created
                 success: true,
                 userId: rows[0]?.user_id,
                 message: 'Query Successful',
@@ -17,6 +27,7 @@ export const createUser = async (userName, userPassword, userType) => {
             }
         } else {
             return {
+                status: 500, // Internal Server Error
                 success: false,
                 userId: -1,
                 message: 'Query Successful',
@@ -28,6 +39,7 @@ export const createUser = async (userName, userPassword, userType) => {
         // Check if username already exists
         if (error.constraint.includes('userinfo_user_name_key'))
             return {
+                status: 409, // Conflict (Username already exists)
                 success: false,
                 userId: -1,
                 message: 'Username already exists',
@@ -36,6 +48,7 @@ export const createUser = async (userName, userPassword, userType) => {
 
         // Return if the query fails
         return {
+            status: 500, // Internal Server Error
             success: false,
             userId: -1,
             message: 'Internal Server Error',
@@ -44,11 +57,56 @@ export const createUser = async (userName, userPassword, userType) => {
     }
 };
 
+/**
+ * To fetch user credentials from the database
+ */
+export const getUserByUserName = async (userName) => {
+    try {
+        const query = {
+            text: `SELECT user_id, user_type_name, user_password FROM UserInfo WHERE user_name = $1`,
+            values: [userName]
+        }
+        const { rowCount, rows } = await pool.query(query);
+
+        if (rowCount === 1) {
+            return {
+                status: 200,
+                success: true,
+                user_id: rows[0].user_id,
+                user_password: rows[0].user_password,
+                user_type: rows[0].user_type_name,
+            };
+        } else {
+            return {
+                status: 404,
+                success: false,
+            }
+        }
+    } catch (error) {
+        console.error(`Error in getUserByUserName() method: ${error}`);
+        // throw error; // Propagate the error to be handled in the route
+        return {
+            status: 500,
+            success: false,
+            message: error
+        }
+    }
+};
+
+/**
+ * Retrieves information about all sellers from the database.
+ *
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+ */
 export const retrieveAllSellers = async () => {
     try {
         const query = {
             text: `
-            SELECT user_id, user_name 
+            SELECT
+                user_id AS seller_id, 
+                user_name AS seller_name
             FROM UserInfo
             WHERE user_type_name = 'seller'
             `
@@ -57,6 +115,7 @@ export const retrieveAllSellers = async () => {
         const { rowCount, rows } = await pool.query(query);
 
         return {
+            status: 200, // HTTP status for OK
             success: true,
             data: rows,
             count: rowCount
@@ -65,6 +124,7 @@ export const retrieveAllSellers = async () => {
         console.error(`Error in retrieveAllSellers() method: ${error}`);
         // Return if the query fails
         return {
+            status: 500,
             success: false,
             userId: -1,
             message: 'Internal Server Error',
@@ -73,6 +133,14 @@ export const retrieveAllSellers = async () => {
     }
 }
 
+/**
+ * Retrieves the catalog of products for a specific seller.
+ *
+ * @param {number} sellerId - The ID of the seller.
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+ */
 export const retrieveSellerCatalog = async (sellerId) => {
     try {
         const query = {
@@ -98,6 +166,7 @@ export const retrieveSellerCatalog = async (sellerId) => {
 
         const { rowCount, rows } = await pool.query(query);
         return {
+            status: 200, // HTTP status for OK
             success: true,
             data: rows,
             count: rowCount
@@ -107,6 +176,7 @@ export const retrieveSellerCatalog = async (sellerId) => {
         console.error(`Error in retrieveSellerCatalog() method: ${error}`);
         // Return if the query fails
         return {
+            status: 500,
             success: false,
             userId: -1,
             message: 'Internal Server Error',
@@ -115,9 +185,33 @@ export const retrieveSellerCatalog = async (sellerId) => {
     }
 }
 
-
+/**
+ * Creates a new order for a specific seller and user.
+ *
+ * @param {number} userId - The ID of the user placing the order.
+ * @param {number} sellerId - The ID of the seller.
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+ */
 export const createOrderBySellerId = async (userId, sellerId) => {
     try {
+        // Check if the catalog for the seller exists
+        const catalogCheckQuery = {
+            text: `SELECT catalog_id FROM CatalogInfo WHERE user_id = $1`,
+            values: [sellerId]
+        }
+
+        const catalogCheckResult = await pool.query(catalogCheckQuery);
+
+        if (catalogCheckResult.rowCount !== 1) {
+            return {
+                status: 404, // Not Found
+                success: false,
+                message: 'Catalog for the seller not found',
+            }
+        }
+
         const query = {
             text: `
                 INSERT INTO OrderInfo(user_id, catalog_id) VALUES(
@@ -131,6 +225,7 @@ export const createOrderBySellerId = async (userId, sellerId) => {
         const { rowCount } = await pool.query(query);
 
         return {
+            status: 200, // HTTP status for OK
             success: rowCount === 1,
             message: rowCount === 1 ? 'Order Successful' : 'Unable to place order',
         }
@@ -138,6 +233,7 @@ export const createOrderBySellerId = async (userId, sellerId) => {
         console.error(`Error in createOrderBySellerId() method: ${error}`);
         // Return if the query fails
         return {
+            status: 500,
             success: false,
             userId: -1,
             message: 'Internal Server Error',
@@ -146,6 +242,14 @@ export const createOrderBySellerId = async (userId, sellerId) => {
     }
 }
 
+/**
+  * Fetches orders for a specific seller.
+ *
+ * @param {number} sellerId - The ID of the seller.
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+ */
 export const fetchOrdersBySellerId = async (sellerId) => {
     try {
         const query = {
@@ -171,8 +275,9 @@ export const fetchOrdersBySellerId = async (sellerId) => {
             values: [sellerId]
         }
         const { rows } = await pool.query(query);
-        
+
         return {
+            status: 200, // HTTP status for OK
             success: true,
             data: rows
         }
@@ -180,8 +285,126 @@ export const fetchOrdersBySellerId = async (sellerId) => {
         console.error(`Error in createOrderBySellerId() method: ${error}`);
         // Return if the query fails
         return {
+            status: 500,
             success: false,
             userId: -1,
+            message: 'Internal Server Error',
+            error: error
+        }
+    }
+}
+
+/**
+ * Creates a catalog for a seller and adds products to it.
+ *
+ * @param {number} userId - The ID of the seller.
+ * @param {Array<Object>} products - An array of product objects containing name and price.
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+ */
+export const createCatalogForProducts = async (userId, products) => {
+    const client = await pool.connect()
+
+    try {
+        // Initiate transaction
+        await client.query('BEGIN');
+        const catalogIdQuery = {
+            text: `INSERT INTO CatalogInfo(user_id) VALUES ($1) RETURNING catalog_id`,
+            values: [userId]
+        }
+
+        const catalogIdResults = await client.query(catalogIdQuery);
+
+        if (catalogIdResults.rowCount != 1) {
+            // Rollback transaction
+            await client.query('ROLLBACK')
+            return {
+                status: 500,
+                success: false,
+                message: 'Unable to create catalog'
+            }
+        }
+
+        if (catalogIdResults.rowCount == 1 && products.length > 0) {
+            const catalogId = catalogIdResults.rows[0]?.catalog_id;
+
+            let productsInsertQuery = `
+            INSERT INTO
+            ProductsInfo(product_name, product_price, catalog_id)
+            VALUES ${products.map(product => { return `('${product.name}', '${product.price}', ${catalogId})` }).join(',')}`
+
+            const { rowCount } = await client.query(productsInsertQuery);
+            if (rowCount >= 1) {
+                await client.query('COMMIT');
+                return {
+                    status: 201, // HTTP status for OK
+                    success: true,
+                    message: 'Catalog created successfully'
+                }
+            } else {
+                throw Error
+            }
+        }
+
+    } catch (error) {
+        await client.query('ROLLBACK')
+        console.error(`Error in createCatalogForProducts() method: ${error}`);
+
+        if (error.constraint.includes('cataloginfo_user_id_key')) {
+            return {
+                status: 409,
+                success: false,
+                message: 'Catalog already exists',
+                error: error
+            }
+        }
+
+        if (error.constraint.includes('cataloginfo_user_id_fkey')) {
+            return {
+                status: 404,
+                success: false,
+                message: 'Seller does not exists',
+                error: error
+            }
+        }
+        // Return if the query fails
+        return {
+            status: 500,
+            success: false,
+            message: 'Internal Server Error',
+            error: error
+        }
+    } finally {
+        client.release();
+    }
+}
+
+/**
+ * Retrieves information about all users.
+ *
+ * @returns {Object} An object containing the result of the operation.
+ * @throws {Error} Throws an error if the operation fails.
+ *
+ */
+export const getAllUsers = async () => {
+    try {
+        const query = {
+            text: `SELECT * FROM UserInfo`
+        }
+
+        const { rows } = await pool.query(query);
+        return {
+            status: 200, // HTTP status for OK
+            success: true,
+            userCount: rows.length,
+            data: rows
+        }
+    } catch (error) {
+        // Return if the query fails
+        return {
+            status: 500,
+            success: false,
             message: 'Internal Server Error',
             error: error
         }

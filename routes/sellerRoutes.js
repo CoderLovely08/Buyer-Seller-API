@@ -1,9 +1,13 @@
 import express from "express";
-import { getAllOrdersForSeller } from "../controllers/sellerController.js";
+import { createProductsCatalog, getAllOrdersForSeller } from "../controllers/sellerController.js";
+import { authenticateUser, authorizeUser } from "../middlewares/authUser.js";
 
 const router = express.Router();
 
 router.route('/orders')
-    .get(getAllOrdersForSeller)
+    .get(authenticateUser, authorizeUser('seller'), getAllOrdersForSeller)
 
+
+router.route('/create-catalog')
+    .post(authenticateUser, authorizeUser('seller'), createProductsCatalog)
 export default router
