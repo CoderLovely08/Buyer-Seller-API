@@ -90,7 +90,8 @@ export const retrieveSellerCatalog = async (sellerId) => {
         LEFT JOIN 
             ProductsInfo pi ON pi.catalog_id = ci.catalog_id
         WHERE 
-            ui.user_id = $1;
+            ui.user_id = $1
+            AND ui.user_type_name = 'seller';
         `,
             values: [sellerId]
         }
@@ -132,6 +133,48 @@ export const createOrderBySellerId = async (userId, sellerId) => {
         return {
             success: rowCount === 1,
             message: rowCount === 1 ? 'Order Successful' : 'Unable to place order',
+        }
+    } catch (error) {
+        console.error(`Error in createOrderBySellerId() method: ${error}`);
+        // Return if the query fails
+        return {
+            success: false,
+            userId: -1,
+            message: 'Internal Server Error',
+            error: error
+        }
+    }
+}
+
+export const fetchOrdersBySellerId = async (sellerId) => {
+    try {
+        const query = {
+            text: `
+            SELECT 
+                oi.order_id,
+                ui.user_id,
+                ui.user_name AS buyer_name,
+                pi.product_name,
+                pi.product_price,
+                oi.created_at
+            FROM
+                OrderInfo oi
+            JOIN UserInfo ui
+                On ui.user_id = oi.user_id
+            JOIN CatalogInfo ci
+                ON oi.catalog_id = ci.catalog_id
+            JOIN ProductsInfo pi
+                ON ci.catalog_id = pi.catalog_id
+            WHERE ci.user_id = $1
+                ORDER BY oi.order_id
+            `,
+            values: [sellerId]
+        }
+        const { rows } = await pool.query(query);
+        
+        return {
+            success: true,
+            data: rows
         }
     } catch (error) {
         console.error(`Error in createOrderBySellerId() method: ${error}`);
