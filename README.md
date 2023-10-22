@@ -84,8 +84,8 @@ CREATE TABLE OrderInfo(
 #### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/buyer-seller-api.git
-cd buyer-seller-api
+git clone https://github.com/CoderLovely08/Buyer-Seller-API.git
+cd Buyer-Seller-API
 ```
 
 #### 2. Install dependencies
