@@ -26,6 +26,8 @@ A simple Nodejs api to demonstrate simple Buyer Seller operations in an E-Commer
 Here's the database schema
 ![Database Schema](assets/schema.png)
 
+*If the schema image is not visible [click here](assets/schema.png)*
+#### Database schema
 There are 4 Tables
 
 1. UserInfo
