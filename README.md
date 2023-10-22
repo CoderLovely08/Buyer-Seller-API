@@ -1,9 +1,28 @@
 # Buyer Seller API
 
+1. [Introduction](#introduction)
+    - [Database Schema](#database-schema)
+2. [Installation](#installation)
+	- [Clone Repository](#1-clone-the-repository)
+	- [Installing dependencies](#2-install-dependencies)
+	- [Sample Environment Variables](#3-sample-environment-variables)
+3. [Auth APIs](#auth-apis)
+    - [Register User](#1-register-user)
+    - [Login User](#2-login-user)
+4. [APIs for Buyers](#apis-for-buyers)
+    - [Get List of Sellers](#1-get-list-of-sellers)
+    - [Get Seller's Catalog](#2-get-sellers-catalog)
+    - [Create Order](#3-create-order)
+5. [APIs for Sellers](#apis-for-sellers)
+    - [Create Catalog](#1-create-catalog)
+    - [Get Orders](#2-get-orders)
+6. [Contributing](#contributing)
+
+
+## Introduction
 A simple Nodejs api to demonstrate simple Buyer Seller operations in an E-Commerce application.
 
 - The database used for the project is PostgreSQL.
-
 Here's the database schema
 ![Database Schema](assets/schema.png)
 
@@ -57,6 +76,34 @@ CREATE TABLE OrderInfo(
 	FOREIGN KEY (user_id) REFERENCES UserInfo(user_id)
 )
 ```
+---
+## Installation
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/buyer-seller-api.git
+cd buyer-seller-api
+```
+
+#### 2. Install dependencies
+```bash
+npm install
+```
+
+#### 3. Sample Environment Variables
+
+```
+PORT=3000
+DB_HOST=your_postgres_host
+DB_PORT=5432
+DB_USER=your_postgres_user
+DB_PASSWORD=your_postgres_password
+DB_DATABASE=your_postgres_database
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+```
+
 ---
 
 ## Auth APIs
