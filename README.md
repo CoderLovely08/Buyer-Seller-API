@@ -26,7 +26,7 @@ A simple Nodejs api to demonstrate simple Buyer Seller operations in an E-Commer
 Here's the database schema
 ![Database Schema](assets/schema.png)
 
-*If the schema image is not visible [click here](assets/schema.png)*
+*If the schema image is not visible [click here](https://drawsql.app/teams/lovelys-team/diagrams/buyer-seller-api)*
 #### Database schema
 There are 4 Tables
 
